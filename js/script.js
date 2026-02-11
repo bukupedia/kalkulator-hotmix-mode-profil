@@ -1,10 +1,9 @@
-/* =========================================
-   ASPAL HOTMIX CALCULATOR - FINAL STABLE
-   - Auto calculate realtime
-   - Bootstrap validation
-   - Stable numeric input (koma/titik aman)
-   - Total panjang otomatis
-========================================= */
+/* ULTRA STABLE VERSION
+   - NO input reformatting
+   - NO blur formatting
+   - Raw user input never modified
+   - Only parsed internally for calculation
+*/
 
 const modeLuas = document.getElementById("modeLuas");
 const modePR = document.getElementById("modePR");
@@ -15,7 +14,6 @@ const segTbody = document.getElementById("segTbody");
 const addSegBtn = document.getElementById("addSegBtn");
 const clearSegBtn = document.getElementById("clearSegBtn");
 const totalLuasCell = document.getElementById("totalLuasCell");
-const totalPanjangCell = document.getElementById("totalPanjangCell");
 
 const luasManualInput = document.getElementById("luasManual");
 const bjInput = document.getElementById("bj");
@@ -30,11 +28,12 @@ const outWaste = document.getElementById("outWaste");
 const outTotal = document.getElementById("outTotal");
 const resetLuasBtn = document.getElementById("resetLuasBtn");
 
-/* ===============================
-   FLEXIBLE NUMBER PARSER (STABLE)
-================================ */
+/* =========================
+   FLEXIBLE NUMBER PARSER
+========================= */
 function parseFlexibleNumber(value) {
     if (!value) return NaN;
+
     let v = String(value).trim().replace(/\s/g, "");
 
     if (v.includes(".") && v.includes(",")) {
@@ -47,36 +46,35 @@ function parseFlexibleNumber(value) {
         v = v.replace(",", ".");
     }
 
-    return parseFloat(v);
+    const n = parseFloat(v);
+    return isNaN(n) ? NaN : n;
 }
 
-function formatDisplay(num, dec = 4) {
-    if (isNaN(num)) return "";
-    return new Intl.NumberFormat("id-ID", {
-        maximumFractionDigits: dec
-    }).format(num);
+function formatNumber(num, digit = 4) {
+    if (isNaN(num)) return "-";
+    return num.toFixed(digit);
 }
 
-/* ===============================
-   SEGMENT SYSTEM
-================================ */
+/* =========================
+   SEGMENT TABLE
+========================= */
 let segIndex = 0;
 
 function createSegRow() {
     segIndex++;
-    const tr = document.createElement("tr");
 
+    const tr = document.createElement("tr");
     tr.innerHTML = `
         <td class="small text-muted">${segIndex}</td>
-        <td><input type="text" class="form-control form-control-sm" placeholder="PR..."></td>
-        <td><input type="text" class="form-control form-control-sm" placeholder="PR..."></td>
-        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-l1" placeholder="L1"></td>
-        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-l2" placeholder="L2"></td>
-        <td class="text-end seg-avg">-</td>
-        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-p" placeholder="Panjang"></td>
-        <td class="text-end seg-luas">-</td>
+        <td><input type="text" class="form-control form-control-sm"></td>
+        <td><input type="text" class="form-control form-control-sm"></td>
+        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-l1"></td>
+        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-l2"></td>
+        <td class="text-end seg-avg small">-</td>
+        <td><input type="text" inputmode="decimal" class="form-control form-control-sm seg-p"></td>
+        <td class="text-end seg-luas small">-</td>
         <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-danger btn-remove">&times;</button>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">&times;</button>
         </td>
     `;
 
@@ -84,9 +82,7 @@ function createSegRow() {
 
     const l1 = tr.querySelector(".seg-l1");
     const l2 = tr.querySelector(".seg-l2");
-    const p = tr.querySelector(".seg-p");
-    const avgCell = tr.querySelector(".seg-avg");
-    const luasCell = tr.querySelector(".seg-luas");
+    const p  = tr.querySelector(".seg-p");
 
     function updateRow() {
         const n1 = parseFlexibleNumber(l1.value);
@@ -94,82 +90,102 @@ function createSegRow() {
         const np = parseFlexibleNumber(p.value);
 
         let avg = NaN;
-
         if (!isNaN(n1) && !isNaN(n2)) avg = (n1 + n2) / 2;
         else if (!isNaN(n1)) avg = n1;
         else if (!isNaN(n2)) avg = n2;
 
         const luas = (!isNaN(avg) && !isNaN(np)) ? avg * np : NaN;
 
-        avgCell.textContent = isNaN(avg) ? "-" : formatDisplay(avg);
-        luasCell.textContent = isNaN(luas) ? "-" : formatDisplay(luas);
+        tr.querySelector(".seg-avg").textContent = formatNumber(avg, 4);
+        tr.querySelector(".seg-luas").textContent = formatNumber(luas, 4);
 
         validateInput(l1);
         validateInput(l2);
         validateInput(p);
 
-        updateTotals();
+        updateTotalLuas();
         autoCalculate();
     }
 
-    [l1, l2, p].forEach(input => {
-        input.addEventListener("input", updateRow);
-        input.addEventListener("blur", () => {
-            const val = parseFlexibleNumber(input.value);
-            if (!isNaN(val)) input.value = formatDisplay(val);
-        });
+    [l1, l2, p].forEach(inp => {
+        inp.addEventListener("input", updateRow);
     });
 
-    tr.querySelector(".btn-remove").addEventListener("click", () => {
+    tr.querySelector(".btn-remove-row").addEventListener("click", () => {
         tr.remove();
-        updateTotals();
+        updateTotalLuas();
         autoCalculate();
     });
 }
 
-function updateTotals() {
-    let totalLuas = 0;
-    let totalPanjang = 0;
-
+/* =========================
+   TOTAL LUAS
+========================= */
+function updateTotalLuas() {
+    let total = 0;
     segTbody.querySelectorAll("tr").forEach(tr => {
-        const luas = parseFlexibleNumber(tr.querySelector(".seg-luas").textContent);
-        const panjang = parseFlexibleNumber(tr.querySelector(".seg-p").value);
-
-        if (!isNaN(luas)) totalLuas += luas;
-        if (!isNaN(panjang)) totalPanjang += panjang;
+        const luasText = tr.querySelector(".seg-luas").textContent;
+        const luasNum = parseFloat(luasText);
+        if (!isNaN(luasNum)) total += luasNum;
     });
 
-    if (totalLuasCell) totalLuasCell.textContent = formatDisplay(totalLuas);
-    if (totalPanjangCell) totalPanjangCell.textContent = formatDisplay(totalPanjang);
+    totalLuasCell.textContent = total.toFixed(4);
 }
 
-/* ===============================
+/* =========================
    VALIDATION
-================================ */
-function validateInput(input) {
-    const val = parseFlexibleNumber(input.value);
-    if (input.value === "" || isNaN(val) || val < 0) {
-        input.classList.add("is-invalid");
-        input.classList.remove("is-valid");
+========================= */
+function validateInput(inp) {
+    const val = parseFlexibleNumber(inp.value);
+    if (inp.value === "" || isNaN(val) || val < 0) {
+        inp.classList.add("is-invalid");
+        inp.classList.remove("is-valid");
     } else {
-        input.classList.remove("is-invalid");
-        input.classList.add("is-valid");
+        inp.classList.remove("is-invalid");
+        inp.classList.add("is-valid");
     }
 }
 
-/* ===============================
-   CORE CALCULATION
-================================ */
-function computeLuas() {
+/* =========================
+   MODE SWITCH
+========================= */
+function setMode(mode) {
+    if (mode === "luas") {
+        boxLuas.classList.remove("d-none");
+        boxPR.classList.add("d-none");
+    } else {
+        boxLuas.classList.add("d-none");
+        boxPR.classList.remove("d-none");
+    }
+    hasilBox.classList.add("d-none");
+}
+
+modeLuas.addEventListener("change", () => setMode("luas"));
+modePR.addEventListener("change", () => setMode("pr"));
+
+/* =========================
+   COMMON INPUT VALIDATION
+========================= */
+[luasManualInput, bjInput, tebalInput, wasteInput].forEach(inp => {
+    inp.addEventListener("input", () => {
+        validateInput(inp);
+        autoCalculate();
+    });
+});
+
+/* =========================
+   CALCULATION
+========================= */
+function computeTotalLuasValue() {
     if (modeLuas.checked) {
         return parseFlexibleNumber(luasManualInput.value);
     } else {
-        return parseFlexibleNumber(totalLuasCell.textContent);
+        return parseFloat(totalLuasCell.textContent);
     }
 }
 
-function autoCalculate() {
-    const luas = computeLuas();
+function calculate() {
+    const luas = computeTotalLuasValue();
     const bj = parseFlexibleNumber(bjInput.value);
     const tebal = parseFlexibleNumber(tebalInput.value);
     const waste = parseFlexibleNumber(wasteInput.value);
@@ -184,7 +200,7 @@ function autoCalculate() {
     const tambahan = awal * (waste / 100);
     const total = awal + tambahan;
 
-    outLuas.textContent = formatDisplay(luas, 2);
+    outLuas.textContent = luas.toFixed(2);
     outAwal.textContent = awal.toFixed(2);
     outWaste.textContent = tambahan.toFixed(2);
     outTotal.textContent = total.toFixed(2);
@@ -192,47 +208,34 @@ function autoCalculate() {
     hasilBox.classList.remove("d-none");
 }
 
-/* ===============================
-   EVENT BINDING
-================================ */
+function autoCalculate() {
+    calculate();
+}
+
+form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    calculate();
+});
+
+/* =========================
+   BUTTONS
+========================= */
 addSegBtn.addEventListener("click", createSegRow);
 
 clearSegBtn.addEventListener("click", () => {
     segTbody.innerHTML = "";
     segIndex = 0;
-    updateTotals();
-    autoCalculate();
+    updateTotalLuas();
+    hasilBox.classList.add("d-none");
 });
 
 resetLuasBtn.addEventListener("click", () => {
     luasManualInput.value = "";
     luasManualInput.classList.remove("is-valid", "is-invalid");
-    autoCalculate();
-});
-
-[luasManualInput, bjInput, tebalInput, wasteInput].forEach(input => {
-    input.addEventListener("input", () => {
-        validateInput(input);
-        autoCalculate();
-    });
-
-    input.addEventListener("blur", () => {
-        const val = parseFlexibleNumber(input.value);
-        if (!isNaN(val)) input.value = formatDisplay(val);
-    });
-});
-
-modeLuas.addEventListener("change", () => {
-    boxLuas.classList.remove("d-none");
-    boxPR.classList.add("d-none");
-    autoCalculate();
-});
-
-modePR.addEventListener("change", () => {
-    boxLuas.classList.add("d-none");
-    boxPR.classList.remove("d-none");
-    autoCalculate();
+    hasilBox.classList.add("d-none");
 });
 
 /* INIT */
 createSegRow();
+setMode("luas");
+updateTotalLuas();
