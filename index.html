@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalkulator Hotmix — Mode Profil (PR)</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-md-11">
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="text-center mb-3">Kalkulator Kebutuhan Aspal Hotmix</h3>
+          <p class="text-center text-muted small mb-4">Dua mode input: <strong>Luas langsung</strong> atau <strong>Profil (PR)</strong> (metode Excel Anda)</p>
+
+          <!-- Mode Toggle -->
+          <div class="mb-4 d-flex gap-2 align-items-center">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="mode" id="modeLuas" value="luas" checked>
+              <label class="form-check-label" for="modeLuas">Input Luas</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="mode" id="modePR" value="pr">
+              <label class="form-check-label" for="modePR">Profil (PR) — segmen</label>
+            </div>
+            <small class="ms-auto text-muted">Auto-normalize angka (., ribuan) & format saat blur</small>
+          </div>
+
+          <form id="hotmixForm" novalidate>
+
+            <!-- LUAS MANUAL -->
+            <div id="boxLuas">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                  <label class="form-label">Total Luas Area (m²)</label>
+                  <input type="text" id="luasManual" class="form-control numeric-input" placeholder="Contoh: 1500 atau 1.500 atau 1.500,5" required>
+                  <div class="invalid-feedback">Masukkan luas ≥ 0</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Reset</label>
+                  <button type="button" id="resetLuasBtn" class="btn btn-outline-secondary d-block w-100">Kosongkan</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- PROFIL PR MODE -->
+            <div id="boxPR" class="d-none">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Tabel Segmen Profil (PR)</h6>
+                <div>
+                  <button id="addSegBtn" type="button" class="btn btn-sm btn-success me-2">+ Tambah Segmen</button>
+                  <button id="clearSegBtn" type="button" class="btn btn-sm btn-outline-danger">Kosongkan Semua</button>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle" id="segTable">
+                  <thead class="table-light small">
+                    <tr>
+                      <th style="width: 90px;">#</th>
+                      <th>Profil Awal</th>
+                      <th>Profil Akhir</th>
+                      <th>L1 (m)</th>
+                      <th>L2 (m)</th>
+                      <th>Avg (m)</th>
+                      <th>Panjang P (m)</th>
+                      <th>Luas (m²)</th>
+                      <th style="width:80px">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="segTbody">
+                    <!-- baris dinamis -->
+                  </tbody>
+                  <tfoot>
+                    <tr class="table-secondary fw-bold">
+                      <td colspan="7" class="text-end">Total Luas (m²)</td>
+                      <td id="totalLuasCell">0.00</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="text-muted small">Aturan: Avg = (L1 + L2) / 2 → Luas = Avg × P</div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- COMMON INPUTS -->
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Berat Jenis Hotmix (ton / m³)</label>
+                <input type="text" id="bj" class="form-control numeric-input" required placeholder="Contoh: 2.3">
+                <div class="invalid-feedback">Masukkan berat jenis ≥ 0</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Ketebalan Aspal (cm)</label>
+                <input type="text" id="tebal" class="form-control numeric-input" required placeholder="Contoh: 5 (cm)">
+                <div class="invalid-feedback">Masukkan ketebalan ≥ 0</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Persentase Waste (%)</label>
+                <input type="text" id="waste" class="form-control numeric-input" required placeholder="Contoh: 5">
+                <div class="invalid-feedback">Masukkan waste ≥ 0</div>
+              </div>
+
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="w-100">
+                  <button type="submit" class="btn btn-primary w-100">Hitung</button>
+                </div>
+              </div>
+            </div>
+
+          </form>
+
+          <!-- HASIL -->
+          <div id="hasilBox" class="mt-4 d-none">
+            <hr>
+            <h5 class="mb-3">Hasil Perhitungan</h5>
+            <div class="row">
+              <div class="col-md-4 mb-2">
+                <div class="card p-2 text-center">
+                  <div class="small text-muted">Luas Terhitung (m²)</div>
+                  <div class="h5" id="outLuas">0.00</div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-2">
+                <div class="card p-2 text-center">
+                  <div class="small text-muted">Kebutuhan Awal (ton)</div>
+                  <div class="h5 text-primary" id="outAwal">0.00</div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-2">
+                <div class="card p-2 text-center">
+                  <div class="small text-muted">Tambahan Waste (ton)</div>
+                  <div class="h5 text-warning" id="outWaste">0.00</div>
+                </div>
+              </div>
+              <div class="col-12 mt-3">
+                <div class="card p-2 text-center">
+                  <div class="small text-muted">Total Kebutuhan Hotmix (ton)</div>
+                  <div class="h4 fw-bold text-success" id="outTotal">0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- card body -->
+      </div> <!-- card -->
+
+      <div class="text-center small text-muted mt-3">Siap di-host: GitHub Pages — static files</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- App JS -->
+<script src="js/script.js"></script>
+</body>
+  </html>
