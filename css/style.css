@@ -22,3 +22,14 @@ body {
 .btn-remove-row {
   padding: .25rem .4rem;
 }
+.table-responsive {
+  overflow-x: auto;
+}
+
+#segTable {
+  min-width: 1000px;
+}
+
+#segTable input {
+  min-width: 90px;
+}
