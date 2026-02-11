@@ -1,24 +1,15 @@
-body {
-  background: #f5f7fa;
+table th, table td {
+    min-width: 110px;
 }
+
+input.form-control {
+    min-width: 100px;
+}
+
 .card {
-  border-radius: 12px;
+    border-radius: 12px;
 }
-.numeric-input.is-valid {
-  border-color: #198754 !important;
-  box-shadow: 0 0 0 .15rem rgba(25,135,84,.1);
-}
-.numeric-input.is-invalid {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 .15rem rgba(220,53,69,.06);
-}
-#totalLuasCell {
-  text-align: right;
-  padding-right: 0.75rem;
-}
-.table td, .table th {
-  vertical-align: middle;
-}
-.btn-remove-row {
-  padding: .25rem .4rem;
+
+button {
+    border-radius: 8px;
 }
