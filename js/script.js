@@ -15,6 +15,7 @@ const segTbody = document.getElementById("segTbody");
 const addSegBtn = document.getElementById("addSegBtn");
 const clearSegBtn = document.getElementById("clearSegBtn");
 const totalLuasCell = document.getElementById("totalLuasCell");
+const totalPanjangCell = document.getElementById("totalPanjangCell");
 
 const luasManualInput = document.getElementById("luasManual");
 const bjInput = document.getElementById("bj");
@@ -126,6 +127,7 @@ function createSegRow(data = {}) {
         });
 
         updateTotalLuas();
+        updateTotalPanjang();
         autoCalculatePreview(); // live preview
     }
 
@@ -144,6 +146,7 @@ function createSegRow(data = {}) {
     btnRemove.addEventListener("click", () => {
         tr.remove();
         updateTotalLuas();
+        updateTotalPanjang();
         autoCalculatePreview();
     });
 
@@ -164,6 +167,24 @@ function updateTotalLuas() {
         }
     });
     totalLuasCell.textContent = any ? formatDisplay(total, 4) : "0.00";
+
+   // Update total panjang dari tabel
+function updateTotalPanjang() {
+    let total = 0;
+    let any = false;
+
+    segTbody.querySelectorAll("tr").forEach(tr => {
+        const inputP = tr.querySelector(".seg-p");
+        const pVal = parseFlexibleNumber(inputP.value);
+
+        if (!isNaN(pVal)) {
+            any = true;
+            total += pVal;
+        }
+    });
+
+    totalPanjangCell.textContent = any ? formatDisplay(total, 4) : "0.00";
+}
 }
 
 // Mode switch handlers
@@ -191,6 +212,7 @@ clearSegBtn.addEventListener("click", () => {
     segTbody.innerHTML = "";
     segIndex = 0;
     updateTotalLuas();
+    updateTotalPanjang();
     hasilBox.classList.add("d-none");
 });
 
@@ -312,3 +334,4 @@ form.addEventListener("submit", function(e) {
 // initialize
 setMode("luas");
 updateTotalLuas();
+updateTotalPanjang();
