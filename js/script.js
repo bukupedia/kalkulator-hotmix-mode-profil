@@ -167,8 +167,9 @@ function updateTotalLuas() {
         }
     });
     totalLuasCell.textContent = any ? formatDisplay(total, 4) : "0.00";
+}
 
-   // Update total panjang dari tabel
+// Update total panjang dari tabel
 function updateTotalPanjang() {
     let total = 0;
     let any = false;
@@ -184,7 +185,6 @@ function updateTotalPanjang() {
     });
 
     totalPanjangCell.textContent = any ? formatDisplay(total, 4) : "0.00";
-}
 }
 
 // Mode switch handlers
