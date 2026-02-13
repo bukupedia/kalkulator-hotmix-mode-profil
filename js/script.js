@@ -312,3 +312,88 @@ form.addEventListener("submit", function(e) {
 // initialize
 setMode("luas");
 updateTotalLuas();
+
+// =============================
+// EXPORT TO EXCEL FEATURE
+// =============================
+
+const exportBtn = document.getElementById("exportExcelBtn");
+
+exportBtn.addEventListener("click", function () {
+
+    // Ambil data luas total
+    const totalLuas = computeTotalLuasValue();
+    const bj = parseFlexibleNumber(bjInput.value);
+    const tebal = parseFlexibleNumber(tebalInput.value);
+    const waste = parseFlexibleNumber(wasteInput.value);
+
+    const tebalMeter = tebal / 100;
+    const volume = totalLuas * tebalMeter;
+    const kebutuhanAwal = volume * bj;
+    const tambahanWaste = kebutuhanAwal * (waste / 100);
+    const totalHotmix = kebutuhanAwal + tambahanWaste;
+
+    // Data array untuk Excel
+    let data = [];
+
+    // HEADER
+    data.push(["KALKULATOR HOTMIX"]);
+    data.push([]);
+
+    if (modePR.checked) {
+        data.push(["MODE: PROFIL (PR)"]);
+        data.push(["No", "Profil Awal", "Profil Akhir", "L1 (m)", "L2 (m)", "Avg (m)", "Panjang (m)", "Luas (m2)"]);
+
+        let i = 1;
+
+        segTbody.querySelectorAll("tr").forEach(tr => {
+
+            const profilAwal = tr.cells[1].querySelector("input").value;
+            const profilAkhir = tr.cells[2].querySelector("input").value;
+            const l1 = parseFlexibleNumber(tr.querySelector(".seg-l1").value);
+            const l2 = parseFlexibleNumber(tr.querySelector(".seg-l2").value);
+            const avg = (l1 + l2) / 2;
+            const p = parseFlexibleNumber(tr.querySelector(".seg-p").value);
+            const luas = avg * p;
+
+            data.push([
+                i++,
+                profilAwal,
+                profilAkhir,
+                l1 || 0,
+                l2 || 0,
+                avg || 0,
+                p || 0,
+                luas || 0
+            ]);
+        });
+
+        data.push([]);
+        data.push(["Total Panjang (m)", "", "", "", "", "", formatDisplay(parseFlexibleNumber(totalPanjangCell.textContent))]);
+        data.push(["Total Luas (m2)", "", "", "", "", "", "", totalLuas]);
+
+    } else {
+        data.push(["MODE: LUAS MANUAL"]);
+        data.push(["Total Luas (m2)", totalLuas]);
+    }
+
+    data.push([]);
+    data.push(["Berat Jenis (ton/m3)", bj]);
+    data.push(["Ketebalan (cm)", tebal]);
+    data.push(["Spare (%)", waste]);
+    data.push([]);
+    data.push(["Kebutuhan Awal (ton)", kebutuhanAwal]);
+    data.push(["Tambahan Waste (ton)", tambahanWaste]);
+    data.push(["Total Hotmix (ton)", totalHotmix]);
+
+    // Buat worksheet
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Buat workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Perhitungan");
+
+    // Export file
+    XLSX.writeFile(wb, "Perhitungan_Hotmix.xlsx");
+});
+
