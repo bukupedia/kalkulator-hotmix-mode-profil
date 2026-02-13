@@ -17,12 +17,6 @@ const clearSegBtn = document.getElementById("clearSegBtn");
 const totalLuasCell = document.getElementById("totalLuasCell");
 const totalPanjangCell = document.getElementById("totalPanjangCell");
 
-const blockTbody = document.getElementById("blockTbody");
-const addBlockBtn = document.getElementById("addBlockBtn");
-const clearBlockBtn = document.getElementById("clearBlockBtn");
-const totalBlockCell = document.getElementById("totalBlockCell");
-const totalLuasBersihEl = document.getElementById("totalLuasBersih");
-
 const luasManualInput = document.getElementById("luasManual");
 const bjInput = document.getElementById("bj");
 const tebalInput = document.getElementById("tebal");
@@ -160,49 +154,6 @@ function createSegRow(data = {}) {
     updateRow();
 }
 
-let blockIndex = 0;
-
-function createBlockRow() {
-    blockIndex++;
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-        <td>${blockIndex}</td>
-        <td><input type="text" class="form-control form-control-sm"></td>
-        <td><input type="text" class="form-control form-control-sm numeric-input block-p"></td>
-        <td><input type="text" class="form-control form-control-sm numeric-input block-l"></td>
-        <td class="text-end block-luas">0.00</td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-block">&times;</button>
-        </td>
-    `;
-
-    blockTbody.appendChild(tr);
-
-    const pInput = tr.querySelector(".block-p");
-    const lInput = tr.querySelector(".block-l");
-    const luasCell = tr.querySelector(".block-luas");
-    const removeBtn = tr.querySelector(".btn-remove-block");
-
-    function updateBlock() {
-        const p = parseFlexibleNumber(pInput.value) || 0;
-        const l = parseFlexibleNumber(lInput.value) || 0;
-        const luas = p * l;
-        luasCell.textContent = formatDisplay(luas, 4);
-        updateTotalBlockout();
-        autoCalculatePreview();
-    }
-
-    pInput.addEventListener("input", updateBlock);
-    lInput.addEventListener("input", updateBlock);
-
-    removeBtn.addEventListener("click", () => {
-        tr.remove();
-        updateTotalBlockout();
-        autoCalculatePreview();
-    });
-}
-
 // Update total luas from table
 function updateTotalLuas() {
     let total = 0;
@@ -234,23 +185,6 @@ function updateTotalPanjang() {
     });
 
     totalPanjangCell.textContent = any ? formatDisplay(total, 4) : "0.00";
-}
-
-function updateTotalBlockout() {
-    let total = 0;
-
-    blockTbody.querySelectorAll("tr").forEach(tr => {
-        const luasText = tr.querySelector(".block-luas").textContent;
-        const luas = parseFlexibleNumber(luasText);
-        if (!isNaN(luas)) total += luas;
-    });
-
-    totalBlockCell.textContent = formatDisplay(total, 4);
-
-    const luasKotor = computeTotalLuasKotor();
-    const bersih = luasKotor - total;
-
-    totalLuasBersihEl.textContent = formatDisplay(bersih > 0 ? bersih : 0, 4);
 }
 
 // Mode switch handlers
@@ -309,37 +243,26 @@ commonNumericInputs.forEach(inp => {
     });
 });
 
-function computeTotalLuasKotor() {
+// Compute total luas value (number)
+function computeTotalLuasValue() {
     if (modeLuas.checked) {
         const n = parseFlexibleNumber(luasManualInput.value);
-        return isNaN(n) ? 0 : n;
+        return isNaN(n) ? NaN : n;
     } else {
+        // sum from table
         let total = 0;
+        let any = false;
         segTbody.querySelectorAll("tr").forEach(tr => {
             const luasText = tr.querySelector(".seg-luas").textContent;
-            const luas = parseFlexibleNumber(luasText);
-            if (!isNaN(luas)) total += luas;
+            const luasNum = parseFlexibleNumber(luasText);
+            if (!isNaN(luasNum)) {
+                any = true;
+                total += luasNum;
+            }
         });
-        return total;
+        return any ? total : NaN;
     }
 }
-
-function computeTotalLuasValue() {
-    if (modePR.checked) {
-        const block = parseFlexibleNumber(totalBlockCell.textContent) || 0;
-        return computeTotalLuasKotor() - block;
-    }
-    return computeTotalLuasKotor();
-}
-
-addBlockBtn.addEventListener("click", createBlockRow);
-
-clearBlockBtn.addEventListener("click", () => {
-    blockTbody.innerHTML = "";
-    blockIndex = 0;
-    updateTotalBlockout();
-    autoCalculatePreview();
-});
 
 // Shared calculation & validation logic
 function validateCommonInputs() {
@@ -487,27 +410,6 @@ exportBtn.addEventListener("click", function () {
         data.push(["TOTAL PANJANG (m)", totalPanjang]);
         data.push(["TOTAL LUAS (m2)", totalLuas]);
         data.push([]);
-
-       data.push([]);
-data.push(["TABEL BLOCKOUT (PENGURANGAN)"]);
-data.push(["No", "Keterangan", "Panjang", "Lebar", "Luas"]);
-
-let i = 1;
-let totalBlock = 0;
-
-blockTbody.querySelectorAll("tr").forEach(tr => {
-    const ket = tr.cells[1].querySelector("input").value;
-    const p = parseFlexibleNumber(tr.querySelector(".block-p").value) || 0;
-    const l = parseFlexibleNumber(tr.querySelector(".block-l").value) || 0;
-    const luas = p * l;
-    totalBlock += luas;
-
-    data.push([i++, ket, p, l, luas]);
-});
-
-data.push(["TOTAL BLOCKOUT", "", "", "", totalBlock]);
-data.push([]);
-data.push(["TOTAL LUAS BERSIH", computeTotalLuasValue()]);
     }
 
     // Ringkasan Tonase
@@ -534,3 +436,158 @@ data.push(["TOTAL LUAS BERSIH", computeTotalLuasValue()]);
     XLSX.writeFile(wb, `Laporan_Survey_${namaProyek.replace(/\s/g, "_")}.xlsx`);
 });
 
+
+/* ===============================
+   TAMBAHAN VARIABEL BLOCKOUT
+================================= */
+
+const blockTbody = document.getElementById("blockTbody");
+const addBlockBtn = document.getElementById("addBlockBtn");
+const clearBlockBtn = document.getElementById("clearBlockBtn");
+const totalBlockCell = document.getElementById("totalBlockCell");
+const totalLuasBersihEl = document.getElementById("totalLuasBersih");
+
+let blockIndex = 0;
+
+/* ===============================
+   CREATE BLOCKOUT ROW
+================================= */
+
+function createBlockRow() {
+    blockIndex++;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+        <td>${blockIndex}</td>
+        <td><input type="text" class="form-control form-control-sm"></td>
+        <td><input type="text" inputmode="decimal" class="form-control form-control-sm numeric-input block-p"></td>
+        <td><input type="text" inputmode="decimal" class="form-control form-control-sm numeric-input block-l"></td>
+        <td class="text-end block-luas">0.00</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-block">&times;</button>
+        </td>
+    `;
+
+    blockTbody.appendChild(tr);
+
+    const pInput = tr.querySelector(".block-p");
+    const lInput = tr.querySelector(".block-l");
+    const luasCell = tr.querySelector(".block-luas");
+    const removeBtn = tr.querySelector(".btn-remove-block");
+
+    function updateBlockRow() {
+        const p = parseFlexibleNumber(pInput.value);
+        const l = parseFlexibleNumber(lInput.value);
+
+        const luas = (!isNaN(p) && !isNaN(l) && p >= 0 && l >= 0)
+            ? p * l
+            : 0;
+
+        luasCell.textContent = formatDisplay(luas, 4);
+
+        updateTotalBlockout();
+        autoCalculatePreview();
+    }
+
+    pInput.addEventListener("input", updateBlockRow);
+    lInput.addEventListener("input", updateBlockRow);
+
+    [pInput, lInput].forEach(inp => {
+        inp.addEventListener("blur", () => {
+            const n = parseFlexibleNumber(inp.value);
+            if (!isNaN(n)) inp.value = formatDisplay(n, 4);
+        });
+    });
+
+    removeBtn.addEventListener("click", () => {
+        tr.remove();
+        updateTotalBlockout();
+        autoCalculatePreview();
+    });
+}
+
+/* ===============================
+   UPDATE TOTAL BLOCKOUT
+================================= */
+
+function updateTotalBlockout() {
+    let total = 0;
+
+    blockTbody.querySelectorAll("tr").forEach(tr => {
+        const luasText = tr.querySelector(".block-luas").textContent;
+        const luas = parseFlexibleNumber(luasText);
+        if (!isNaN(luas)) total += luas;
+    });
+
+    totalBlockCell.textContent = formatDisplay(total, 4);
+
+    const luasKotor = computeTotalLuasKotor();
+    const bersih = luasKotor - total;
+
+    totalLuasBersihEl.textContent = formatDisplay(bersih > 0 ? bersih : 0, 4);
+}
+
+/* ===============================
+   PENYESUAIAN LUAS (TANPA UBAH ARSITEKTUR)
+================================= */
+
+function computeTotalLuasKotor() {
+    if (modeLuas.checked) {
+        const n = parseFlexibleNumber(luasManualInput.value);
+        return isNaN(n) ? 0 : n;
+    } else {
+        let total = 0;
+        segTbody.querySelectorAll("tr").forEach(tr => {
+            const luasText = tr.querySelector(".seg-luas").textContent;
+            const luas = parseFlexibleNumber(luasText);
+            if (!isNaN(luas)) total += luas;
+        });
+        return total;
+    }
+}
+
+function computeTotalLuasValue() {
+    if (modePR.checked) {
+        const block = parseFlexibleNumber(totalBlockCell.textContent) || 0;
+        const bersih = computeTotalLuasKotor() - block;
+        return bersih > 0 ? bersih : 0;
+    }
+    return computeTotalLuasKotor();
+}
+
+/* ===============================
+   EVENT LISTENER BLOCKOUT
+================================= */
+
+if (addBlockBtn) {
+    addBlockBtn.addEventListener("click", createBlockRow);
+}
+
+if (clearBlockBtn) {
+    clearBlockBtn.addEventListener("click", () => {
+        blockTbody.innerHTML = "";
+        blockIndex = 0;
+        updateTotalBlockout();
+        autoCalculatePreview();
+    });
+}
+
+/* ===============================
+   PENYESUAIAN RINGAN PADA SEGMENT
+   (Hanya Tambahan Sinkronisasi)
+================================= */
+
+/*
+Tambahkan baris ini DI DALAM updateRow() segmen,
+tepat setelah updateTotalPanjang();
+*/
+
+updateTotalBlockout();
+
+/*
+Tambahkan juga di event remove segmen,
+setelah updateTotalPanjang();
+*/
+
+updateTotalBlockout();
