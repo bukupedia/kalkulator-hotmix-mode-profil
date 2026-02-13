@@ -17,6 +17,12 @@ const clearSegBtn = document.getElementById("clearSegBtn");
 const totalLuasCell = document.getElementById("totalLuasCell");
 const totalPanjangCell = document.getElementById("totalPanjangCell");
 
+const blockTbody = document.getElementById("blockTbody");
+const addBlockBtn = document.getElementById("addBlockBtn");
+const clearBlockBtn = document.getElementById("clearBlockBtn");
+const totalBlockCell = document.getElementById("totalBlockCell");
+const totalLuasBersihEl = document.getElementById("totalLuasBersih");
+
 const luasManualInput = document.getElementById("luasManual");
 const bjInput = document.getElementById("bj");
 const tebalInput = document.getElementById("tebal");
@@ -154,6 +160,49 @@ function createSegRow(data = {}) {
     updateRow();
 }
 
+let blockIndex = 0;
+
+function createBlockRow() {
+    blockIndex++;
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+        <td>${blockIndex}</td>
+        <td><input type="text" class="form-control form-control-sm"></td>
+        <td><input type="text" class="form-control form-control-sm numeric-input block-p"></td>
+        <td><input type="text" class="form-control form-control-sm numeric-input block-l"></td>
+        <td class="text-end block-luas">0.00</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-block">&times;</button>
+        </td>
+    `;
+
+    blockTbody.appendChild(tr);
+
+    const pInput = tr.querySelector(".block-p");
+    const lInput = tr.querySelector(".block-l");
+    const luasCell = tr.querySelector(".block-luas");
+    const removeBtn = tr.querySelector(".btn-remove-block");
+
+    function updateBlock() {
+        const p = parseFlexibleNumber(pInput.value) || 0;
+        const l = parseFlexibleNumber(lInput.value) || 0;
+        const luas = p * l;
+        luasCell.textContent = formatDisplay(luas, 4);
+        updateTotalBlockout();
+        autoCalculatePreview();
+    }
+
+    pInput.addEventListener("input", updateBlock);
+    lInput.addEventListener("input", updateBlock);
+
+    removeBtn.addEventListener("click", () => {
+        tr.remove();
+        updateTotalBlockout();
+        autoCalculatePreview();
+    });
+}
+
 // Update total luas from table
 function updateTotalLuas() {
     let total = 0;
@@ -185,6 +234,23 @@ function updateTotalPanjang() {
     });
 
     totalPanjangCell.textContent = any ? formatDisplay(total, 4) : "0.00";
+}
+
+function updateTotalBlockout() {
+    let total = 0;
+
+    blockTbody.querySelectorAll("tr").forEach(tr => {
+        const luasText = tr.querySelector(".block-luas").textContent;
+        const luas = parseFlexibleNumber(luasText);
+        if (!isNaN(luas)) total += luas;
+    });
+
+    totalBlockCell.textContent = formatDisplay(total, 4);
+
+    const luasKotor = computeTotalLuasKotor();
+    const bersih = luasKotor - total;
+
+    totalLuasBersihEl.textContent = formatDisplay(bersih > 0 ? bersih : 0, 4);
 }
 
 // Mode switch handlers
@@ -243,26 +309,37 @@ commonNumericInputs.forEach(inp => {
     });
 });
 
-// Compute total luas value (number)
-function computeTotalLuasValue() {
+function computeTotalLuasKotor() {
     if (modeLuas.checked) {
         const n = parseFlexibleNumber(luasManualInput.value);
-        return isNaN(n) ? NaN : n;
+        return isNaN(n) ? 0 : n;
     } else {
-        // sum from table
         let total = 0;
-        let any = false;
         segTbody.querySelectorAll("tr").forEach(tr => {
             const luasText = tr.querySelector(".seg-luas").textContent;
-            const luasNum = parseFlexibleNumber(luasText);
-            if (!isNaN(luasNum)) {
-                any = true;
-                total += luasNum;
-            }
+            const luas = parseFlexibleNumber(luasText);
+            if (!isNaN(luas)) total += luas;
         });
-        return any ? total : NaN;
+        return total;
     }
 }
+
+function computeTotalLuasValue() {
+    if (modePR.checked) {
+        const block = parseFlexibleNumber(totalBlockCell.textContent) || 0;
+        return computeTotalLuasKotor() - block;
+    }
+    return computeTotalLuasKotor();
+}
+
+addBlockBtn.addEventListener("click", createBlockRow);
+
+clearBlockBtn.addEventListener("click", () => {
+    blockTbody.innerHTML = "";
+    blockIndex = 0;
+    updateTotalBlockout();
+    autoCalculatePreview();
+});
 
 // Shared calculation & validation logic
 function validateCommonInputs() {
@@ -410,6 +487,27 @@ exportBtn.addEventListener("click", function () {
         data.push(["TOTAL PANJANG (m)", totalPanjang]);
         data.push(["TOTAL LUAS (m2)", totalLuas]);
         data.push([]);
+
+       data.push([]);
+data.push(["TABEL BLOCKOUT (PENGURANGAN)"]);
+data.push(["No", "Keterangan", "Panjang", "Lebar", "Luas"]);
+
+let i = 1;
+let totalBlock = 0;
+
+blockTbody.querySelectorAll("tr").forEach(tr => {
+    const ket = tr.cells[1].querySelector("input").value;
+    const p = parseFlexibleNumber(tr.querySelector(".block-p").value) || 0;
+    const l = parseFlexibleNumber(tr.querySelector(".block-l").value) || 0;
+    const luas = p * l;
+    totalBlock += luas;
+
+    data.push([i++, ket, p, l, luas]);
+});
+
+data.push(["TOTAL BLOCKOUT", "", "", "", totalBlock]);
+data.push([]);
+data.push(["TOTAL LUAS BERSIH", computeTotalLuasValue()]);
     }
 
     // Ringkasan Tonase
