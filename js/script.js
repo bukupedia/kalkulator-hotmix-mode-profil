@@ -342,9 +342,16 @@ updateTotalPanjang();
 
 const exportBtn = document.getElementById("exportExcelBtn");
 
+// =============================
+// EXPORT LAPORAN LAPANGAN PROFESIONAL
+// =============================
+
 exportBtn.addEventListener("click", function () {
 
-    // Ambil data luas total
+    const namaProyek = document.getElementById("namaProyek").value || "-";
+    const lokasi = document.getElementById("lokasiProyek").value || "-";
+    const tanggal = new Date().toLocaleDateString("id-ID");
+
     const totalLuas = computeTotalLuasValue();
     const bj = parseFlexibleNumber(bjInput.value);
     const tebal = parseFlexibleNumber(tebalInput.value);
@@ -356,67 +363,76 @@ exportBtn.addEventListener("click", function () {
     const tambahanWaste = kebutuhanAwal * (waste / 100);
     const totalHotmix = kebutuhanAwal + tambahanWaste;
 
-    // Data array untuk Excel
     let data = [];
 
-    // HEADER
-    data.push(["KALKULATOR HOTMIX"]);
+    // HEADER PROFESIONAL
+    data.push(["LAPORAN HASIL PENGUKURAN"]);
+    data.push(["Nama Proyek", namaProyek]);
+    data.push(["Lokasi", lokasi]);
+    data.push(["Tanggal", tanggal]);
     data.push([]);
 
     if (modePR.checked) {
-        data.push(["MODE: PROFIL (PR)"]);
+
+        data.push(["TABEL PROFIL (PR)"]);
+        data.push([]);
+
         data.push(["No", "Profil Awal", "Profil Akhir", "L1 (m)", "L2 (m)", "Avg (m)", "Panjang (m)", "Luas (m2)"]);
 
         let i = 1;
+        let totalPanjang = 0;
 
         segTbody.querySelectorAll("tr").forEach(tr => {
 
             const profilAwal = tr.cells[1].querySelector("input").value;
             const profilAkhir = tr.cells[2].querySelector("input").value;
-            const l1 = parseFlexibleNumber(tr.querySelector(".seg-l1").value);
-            const l2 = parseFlexibleNumber(tr.querySelector(".seg-l2").value);
+            const l1 = parseFlexibleNumber(tr.querySelector(".seg-l1").value) || 0;
+            const l2 = parseFlexibleNumber(tr.querySelector(".seg-l2").value) || 0;
             const avg = (l1 + l2) / 2;
-            const p = parseFlexibleNumber(tr.querySelector(".seg-p").value);
+            const p = parseFlexibleNumber(tr.querySelector(".seg-p").value) || 0;
             const luas = avg * p;
+
+            totalPanjang += p;
 
             data.push([
                 i++,
                 profilAwal,
                 profilAkhir,
-                l1 || 0,
-                l2 || 0,
-                avg || 0,
-                p || 0,
-                luas || 0
+                l1,
+                l2,
+                avg,
+                p,
+                luas
             ]);
         });
 
         data.push([]);
-        data.push(["Total Panjang (m)", "", "", "", "", "", formatDisplay(parseFlexibleNumber(totalPanjangCell.textContent))]);
-        data.push(["Total Luas (m2)", "", "", "", "", "", "", totalLuas]);
-
-    } else {
-        data.push(["MODE: LUAS MANUAL"]);
-        data.push(["Total Luas (m2)", totalLuas]);
+        data.push(["TOTAL PANJANG (m)", totalPanjang]);
+        data.push(["TOTAL LUAS (m2)", totalLuas]);
+        data.push([]);
     }
 
+    // Ringkasan Tonase
+    data.push(["RINGKASAN PERHITUNGAN"]);
     data.push([]);
     data.push(["Berat Jenis (ton/m3)", bj]);
     data.push(["Ketebalan (cm)", tebal]);
     data.push(["Spare (%)", waste]);
     data.push([]);
     data.push(["Kebutuhan Awal (ton)", kebutuhanAwal]);
-    data.push(["Tambahan Waste (ton)", tambahanWaste]);
-    data.push(["Total Hotmix (ton)", totalHotmix]);
+    data.push(["Spare (ton)", tambahanWaste]);
+    data.push(["TOTAL HOTMIX (ton)", totalHotmix]);
 
-    // Buat worksheet
     const ws = XLSX.utils.aoa_to_sheet(data);
 
-    // Buat workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Perhitungan");
+    // Styling sederhana (merge title)
+    ws["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }
+    ];
 
-    // Export file
-    XLSX.writeFile(wb, "Perhitungan_Hotmix.xlsx");
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+
+    XLSX.writeFile(wb, `Laporan_Survey_${namaProyek.replace(/\s/g, "_")}.xlsx`);
 });
 
