@@ -110,6 +110,45 @@
               <div class="text-muted small">Keterangan: Avg = (L1 + L2) / 2 → Luas = Avg × P</div>
             </div>
 
+            <!-- BLOCKOUT / PENGURANGAN -->
+<div id="boxBlockout" class="mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="mb-0">Blockout (Pengurangan Area)</h6>
+    <div>
+      <button id="addBlockBtn" type="button" class="btn btn-sm btn-warning me-2">+ Tambah Blockout</button>
+      <button id="clearBlockBtn" type="button" class="btn btn-sm btn-outline-danger">Kosongkan</button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light small">
+        <tr>
+          <th style="width:70px">#</th>
+          <th>Keterangan</th>
+          <th>Panjang (m)</th>
+          <th>Lebar (m)</th>
+          <th>Luas (m²)</th>
+          <th style="width:80px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="blockTbody"></tbody>
+      <tfoot>
+        <tr class="table-warning fw-bold">
+          <td colspan="4" class="text-end">Total Luas Pengurangan (m²)</td>
+          <td id="totalBlockCell">0.00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="small mt-2">
+    <strong>Total Luas Bersih (m²):</strong>
+    <span id="totalLuasBersih">0.00</span>
+  </div>
+</div>
+
             <hr class="my-4">
 
             <!-- COMMON INPUTS -->
