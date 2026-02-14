@@ -331,6 +331,85 @@ form.addEventListener("submit", function(e) {
     calculateAndShow();
 });
 
+// =============================
+// BLOCKOUT MODULE (PENGURANGAN)
+// =============================
+
+const blockTbody = document.getElementById("blockTbody");
+const addBlockBtn = document.getElementById("addBlockBtn");
+const clearBlockBtn = document.getElementById("clearBlockBtn");
+const totalBlockCell = document.getElementById("totalBlockCell");
+
+let blockIndex = 0;
+
+// Buat baris blockout
+function createBlockRow() {
+    blockIndex += 1;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+        <td class="small text-muted">${blockIndex}</td>
+        <td><input type="text" class="form-control form-control-sm" placeholder="Contoh: Manhole"></td>
+        <td><input type="text" class="form-control form-control-sm numeric-input block-p" placeholder="Panjang"></td>
+        <td><input type="text" class="form-control form-control-sm numeric-input block-l" placeholder="Lebar"></td>
+        <td class="text-end block-luas small">0.00</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-block">&times;</button>
+        </td>
+    `;
+
+    blockTbody.appendChild(tr);
+
+    const inputP = tr.querySelector(".block-p");
+    const inputL = tr.querySelector(".block-l");
+
+    function updateBlockRow() {
+        const p = parseFlexibleNumber(inputP.value);
+        const l = parseFlexibleNumber(inputL.value);
+
+        const luas = (!isNaN(p) && !isNaN(l)) ? p * l : NaN;
+
+        tr.querySelector(".block-luas").textContent =
+            isNaN(luas) ? "-" : formatDisplay(luas, 4);
+
+        updateTotalBlock();
+        autoCalculatePreview();
+    }
+
+    inputP.addEventListener("input", updateBlockRow);
+    inputL.addEventListener("input", updateBlockRow);
+
+    tr.querySelector(".btn-remove-block").addEventListener("click", () => {
+        tr.remove();
+        updateTotalBlock();
+        autoCalculatePreview();
+    });
+}
+
+// Hitung total luas pengurangan
+function updateTotalBlock() {
+    let total = 0;
+
+    blockTbody.querySelectorAll("tr").forEach(tr => {
+        const luas = parseFlexibleNumber(tr.querySelector(".block-luas").textContent);
+        if (!isNaN(luas)) total += luas;
+    });
+
+    totalBlockCell.textContent = formatDisplay(total, 4);
+}
+
+// tombol tambah
+addBlockBtn.addEventListener("click", createBlockRow);
+
+// tombol clear
+clearBlockBtn.addEventListener("click", () => {
+    blockTbody.innerHTML = "";
+    blockIndex = 0;
+    updateTotalBlock();
+    autoCalculatePreview();
+});
+
 // initialize
 setMode("luas");
 updateTotalLuas();
