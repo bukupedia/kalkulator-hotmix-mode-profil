@@ -249,18 +249,40 @@ function computeTotalLuasValue() {
         const n = parseFlexibleNumber(luasManualInput.value);
         return isNaN(n) ? NaN : n;
     } else {
-        // sum from table
-        let total = 0;
-        let any = false;
-        segTbody.querySelectorAll("tr").forEach(tr => {
-            const luasText = tr.querySelector(".seg-luas").textContent;
-            const luasNum = parseFlexibleNumber(luasText);
-            if (!isNaN(luasNum)) {
-                any = true;
-                total += luasNum;
-            }
-        });
-        return any ? total : NaN;
+        } else {
+    // sum from table (TOTAL LUAS PR)
+    let totalPR = 0;
+    let any = false;
+
+    segTbody.querySelectorAll("tr").forEach(tr => {
+        const luasText = tr.querySelector(".seg-luas").textContent;
+        const luasNum = parseFlexibleNumber(luasText);
+        if (!isNaN(luasNum)) {
+            any = true;
+            totalPR += luasNum;
+        }
+    });
+
+    if (!any) return NaN;
+
+    // ==========================
+    // TAMBAHAN: TOTAL BLOCKOUT
+    // ==========================
+    let totalBlock = 0;
+
+    blockTbody.querySelectorAll("tr").forEach(tr => {
+        const luasBlock = parseFlexibleNumber(
+            tr.querySelector(".block-luas").textContent
+        );
+        if (!isNaN(luasBlock)) {
+            totalBlock += luasBlock;
+        }
+    });
+
+    const finalLuas = totalPR - totalBlock;
+
+    return finalLuas >= 0 ? finalLuas : 0;
+}
     }
 }
 
