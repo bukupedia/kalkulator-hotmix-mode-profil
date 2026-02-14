@@ -421,6 +421,18 @@ function updateTotalBlock() {
     totalBlockCell.textContent = formatDisplay(total, 4);
 }
 
+// Helper untuk export (hitung total blockout numerik)
+function getTotalBlockForExport() {
+    let total = 0;
+    blockTbody.querySelectorAll("tr").forEach(tr => {
+        const luas = parseFlexibleNumber(
+            tr.querySelector(".block-luas").textContent
+        );
+        if (!isNaN(luas)) total += luas;
+    });
+    return total;
+}
+
 // tombol tambah
 addBlockBtn.addEventListener("click", createBlockRow);
 
@@ -507,10 +519,45 @@ exportBtn.addEventListener("click", function () {
             ]);
         });
 
-        data.push([]);
-        data.push(["TOTAL PANJANG (m)", totalPanjang]);
-        data.push(["TOTAL LUAS (m2)", totalLuas]);
-        data.push([]);
+data.push([]);
+data.push(["TOTAL PANJANG (m)", totalPanjang]);
+data.push(["TOTAL LUAS KOTOR (m2)", totalPanjang ? computeTotalLuasValue() + getTotalBlockForExport() : 0]);
+data.push([]);
+
+// ======================
+// TABEL BLOCKOUT
+// ======================
+
+data.push(["TABEL PENGURANGAN (BLOCKOUT)"]);
+data.push([]);
+data.push(["No", "Keterangan", "Panjang (m)", "Lebar (m)", "Luas (m2)"]);
+
+let iBlock = 1;
+let totalBlockExport = 0;
+
+blockTbody.querySelectorAll("tr").forEach(tr => {
+
+    const ket = tr.cells[1].querySelector("input").value || "-";
+    const p = parseFlexibleNumber(tr.querySelector(".block-p").value) || 0;
+    const l = parseFlexibleNumber(tr.querySelector(".block-l").value) || 0;
+    const luas = p * l;
+
+    totalBlockExport += luas;
+
+    data.push([
+        iBlock++,
+        ket,
+        p,
+        l,
+        luas
+    ]);
+});
+
+data.push([]);
+data.push(["TOTAL BLOCKOUT (m2)", totalBlockExport]);
+data.push([]);
+data.push(["TOTAL LUAS BERSIH (m2)", totalLuas]);
+data.push([]);
     }
 
     // Ringkasan Tonase
