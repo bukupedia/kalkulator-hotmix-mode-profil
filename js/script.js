@@ -249,7 +249,6 @@ function computeTotalLuasValue() {
         const n = parseFlexibleNumber(luasManualInput.value);
         return isNaN(n) ? NaN : n;
     } else {
-        } else {
     // sum from table (TOTAL LUAS PR)
     let totalPR = 0;
     let any = false;
@@ -283,8 +282,8 @@ function computeTotalLuasValue() {
 
     return finalLuas >= 0 ? finalLuas : 0;
 }
+
     }
-}
 
 // Shared calculation & validation logic
 function validateCommonInputs() {
