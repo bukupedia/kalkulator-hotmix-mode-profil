@@ -192,13 +192,16 @@ function setMode(mode) {
     if (mode === "luas") {
         boxLuas.classList.remove("d-none");
         boxPR.classList.add("d-none");
+        document.getElementById("blockTable").classList.add("d-none");  // Hide Blockout
     } else {
         boxLuas.classList.add("d-none");
         boxPR.classList.remove("d-none");
+        document.getElementById("blockTable").classList.remove("d-none");  // Show Blockout only in PR
     }
     // reset display
     hasilBox.classList.add("d-none");
 }
+
 
 modeLuas.addEventListener("change", () => setMode("luas"));
 modePR.addEventListener("change", () => setMode("pr"));
@@ -582,4 +585,3 @@ data.push([]);
 
     XLSX.writeFile(wb, `Laporan_Survey_${namaProyek.replace(/\s/g, "_")}.xlsx`);
 });
-
