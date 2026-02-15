@@ -78,7 +78,7 @@ function createSegRow(data = {}) {
     const idxCell = `<td class="small text-muted">${segIndex}</td>`;
     const profilAwal = `<td><input type="text" class="form-control form-control-sm" placeholder="PR..." value="${data.profilAwal||""}"></td>`;
     const profilAkhir = `<td><input type="text" class="form-control form-control-sm" placeholder="PR..." value="${data.profilAkhir||""}"></td>`;
-
+    const keterangan = `<td><input type="text" class="form-control form-control-sm" placeholder="Keterangan..." value="${data.keterangan||""}"></td>`;
     const l1 = `<td><input type="text" inputmode="decimal" class="form-control form-control-sm numeric-input seg-l1" value="${data.l1||""}" placeholder="L1"></td>`;
     const l2 = `<td><input type="text" inputmode="decimal" class="form-control form-control-sm numeric-input seg-l2" value="${data.l2||""}" placeholder="L2"></td>`;
     const avg = `<td class="text-end seg-avg small">0.00</td>`;
@@ -86,7 +86,7 @@ function createSegRow(data = {}) {
     const luas = `<td class="text-end seg-luas small">0.00</td>`;
     const aksi = `<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Hapus"><span>&times;</span></button></td>`;
 
-    tr.innerHTML = idxCell + profilAwal + profilAkhir + l1 + l2 + avg + p + luas + aksi;
+    tr.innerHTML = idxCell + profilAwal + profilAkhir + keterangan + l1 + l2 + avg + p + luas + aksi;
     segTbody.appendChild(tr);
 
     // attach events
@@ -492,7 +492,7 @@ exportBtn.addEventListener("click", function () {
         data.push(["TABEL PROFIL (PR)"]);
         data.push([]);
 
-        data.push(["No", "Profil Awal", "Profil Akhir", "L1 (m)", "L2 (m)", "Avg (m)", "Panjang (m)", "Luas (m2)"]);
+        data.push(["No", "Profil Awal", "Profil Akhir", "Keterangan", "L1 (m)", "L2 (m)", "Avg (m)", "Panjang (m)", "Luas (m2)"]);
 
         let i = 1;
         let totalPanjang = 0;
@@ -501,6 +501,7 @@ exportBtn.addEventListener("click", function () {
 
             const profilAwal = tr.cells[1].querySelector("input").value;
             const profilAkhir = tr.cells[2].querySelector("input").value;
+			const keterangan = tr.cells[3].querySelector("input").value || "-";
             const l1 = parseFlexibleNumber(tr.querySelector(".seg-l1").value) || 0;
             const l2 = parseFlexibleNumber(tr.querySelector(".seg-l2").value) || 0;
             const avg = (l1 + l2) / 2;
@@ -513,6 +514,7 @@ exportBtn.addEventListener("click", function () {
                 i++,
                 profilAwal,
                 profilAkhir,
+				keterangan,
                 l1,
                 l2,
                 avg,
